@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TaskManagementSystem.Migrations
 {
-    public partial class addedrequiredtables : Migration
+    public partial class EntityandModelsareadded : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -41,10 +41,9 @@ namespace TaskManagementSystem.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DepartmentId = table.Column<int>(type: "int", nullable: true)
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DepartmentId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -53,7 +52,8 @@ namespace TaskManagementSystem.Migrations
                         name: "FK_Users_Departments_DepartmentId",
                         column: x => x.DepartmentId,
                         principalTable: "Departments",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -64,18 +64,11 @@ namespace TaskManagementSystem.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Deadline = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DepartmentId = table.Column<int>(type: "int", nullable: false),
                     StatusId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tasks", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Tasks_Departments_DepartmentId",
-                        column: x => x.DepartmentId,
-                        principalTable: "Departments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Tasks_Statuses_StatusId",
                         column: x => x.StatusId,
@@ -148,6 +141,28 @@ namespace TaskManagementSystem.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.InsertData(
+                table: "Departments",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "IT" },
+                    { 2, "HR" },
+                    { 3, "NON IT" },
+                    { 4, "Admin" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "Id", "DepartmentId", "Password", "UserName" },
+                values: new object[,]
+                {
+                    { 1, 1, "TestUser1", "TestUser1" },
+                    { 2, 2, "TestUser2", "TestUser2" },
+                    { 3, 3, "TestUser3", "TestUser3" },
+                    { 4, 4, "Master", "Master" }
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Attachments_TaskId",
                 table: "Attachments",
@@ -157,11 +172,6 @@ namespace TaskManagementSystem.Migrations
                 name: "IX_Comments_TaskId",
                 table: "Comments",
                 column: "TaskId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Tasks_DepartmentId",
-                table: "Tasks",
-                column: "DepartmentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tasks_StatusId",

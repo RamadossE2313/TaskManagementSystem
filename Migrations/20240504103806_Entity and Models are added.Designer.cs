@@ -12,8 +12,8 @@ using TaskManagementSystem.Data;
 namespace TaskManagementSystem.Migrations
 {
     [DbContext(typeof(TaskManagementDBContext))]
-    [Migration("20240501174505_added required tables")]
-    partial class addedrequiredtables
+    [Migration("20240504103806_Entity and Models are added")]
+    partial class EntityandModelsareadded
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -90,6 +90,28 @@ namespace TaskManagementSystem.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Departments");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "IT"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "HR"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "NON IT"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Admin"
+                        });
                 });
 
             modelBuilder.Entity("TaskManagementSystem.Entity.Status", b =>
@@ -120,9 +142,6 @@ namespace TaskManagementSystem.Migrations
                     b.Property<DateTime>("Deadline")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DepartmentId")
-                        .HasColumnType("int");
-
                     b.Property<int>("StatusId")
                         .HasColumnType("int");
 
@@ -131,8 +150,6 @@ namespace TaskManagementSystem.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DepartmentId");
 
                     b.HasIndex("StatusId");
 
@@ -147,18 +164,14 @@ namespace TaskManagementSystem.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int?>("DepartmentId")
+                    b.Property<int>("DepartmentId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Email")
+                    b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Role")
+                    b.Property<string>("UserName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -167,6 +180,36 @@ namespace TaskManagementSystem.Migrations
                     b.HasIndex("DepartmentId");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DepartmentId = 1,
+                            Password = "TestUser1",
+                            UserName = "TestUser1"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DepartmentId = 2,
+                            Password = "TestUser2",
+                            UserName = "TestUser2"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            DepartmentId = 3,
+                            Password = "TestUser3",
+                            UserName = "TestUser3"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            DepartmentId = 4,
+                            Password = "Master",
+                            UserName = "Master"
+                        });
                 });
 
             modelBuilder.Entity("TaskUser", b =>
@@ -200,28 +243,24 @@ namespace TaskManagementSystem.Migrations
 
             modelBuilder.Entity("TaskManagementSystem.Entity.Task", b =>
                 {
-                    b.HasOne("TaskManagementSystem.Entity.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("TaskManagementSystem.Entity.Status", "Status")
                         .WithMany("Tasks")
                         .HasForeignKey("StatusId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Department");
-
                     b.Navigation("Status");
                 });
 
             modelBuilder.Entity("TaskManagementSystem.Entity.User", b =>
                 {
-                    b.HasOne("TaskManagementSystem.Entity.Department", null)
+                    b.HasOne("TaskManagementSystem.Entity.Department", "Department")
                         .WithMany("Users")
-                        .HasForeignKey("DepartmentId");
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
                 });
 
             modelBuilder.Entity("TaskUser", b =>

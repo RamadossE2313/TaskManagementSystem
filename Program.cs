@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using System.Configuration;
 using TaskManagementSystem.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,6 +29,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=TaskManagement}/{action=Dashboard}/{id?}");
+    pattern: "{controller=Login}/{action=Login}/{id?}");
 
 app.Run();

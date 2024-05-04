@@ -17,48 +17,24 @@ namespace TaskManagementSystem.Data
         public DbSet<Attachment> Attachments { get; set; }
         public DbSet<Comment> Comments { get; set; }
 
-        //protected override void OnModelCreating(DbModelBuilder modelBuilder)
-        //{
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
 
-        //    // Task to Status relationship
-        //    modelBuilder.Entity<Entity.Task>()
-        //        .HasRequired(t => t.Status)
-        //        .WithMany(s => s.Tasks)
-        //        .HasForeignKey(t => t.StatusId)
-        //        .WillCascadeOnDelete(false);
+            modelBuilder.Entity<Department>().HasData(
+                new Department { Id = 1, Name = "IT" },
+                new Department { Id = 2, Name = "HR" },
+                new Department { Id = 3, Name = "NON IT" },
+                new Department { Id = 4, Name = "Admin" }
+                );
 
-        //    // User to Department relationship
-        //    modelBuilder.Entity<User>()
-        //        .HasRequired(u => u.Department)
-        //        .WithMany(d => d.Users)
-        //        .HasForeignKey(u => u.DepartmentId)
-        //        .WillCascadeOnDelete(false);
-
-        //    // Task to User (TeamMembers) relationship
-        //    modelBuilder.Entity<Entity.Task>()
-        //        .HasMany(t => t.TeamMembers)
-        //        .WithMany(u => u.Tasks)
-        //        .Map(m =>
-        //        {
-        //            m.ToTable("TaskUser");
-        //            m.MapLeftKey("TaskId");
-        //            m.MapRightKey("UserId");
-        //        });
-
-        //    // Task to Attachment relationship
-        //    modelBuilder.Entity<Entity.Task>()
-        //        .HasMany(t => t.Attachments)
-        //        .WithRequired(a => a.Task)
-        //        .HasForeignKey(a => a.TaskId)
-        //        .WillCascadeOnDelete(false);
-
-        //    // Task to Comment relationship
-        //    modelBuilder.Entity<Entity.Task>()
-        //        .HasMany(t => t.Comments)
-        //        .WithRequired(c => c.Task)
-        //        .HasForeignKey(c => c.TaskId)
-        //        .WillCascadeOnDelete(false);
-        //}
+            modelBuilder.Entity<User>().HasData(
+                new User { Id = 1, UserName = "TestUser1", Password = "TestUser1", DepartmentId = 1 },
+                new User { Id = 2, UserName = "TestUser2", Password = "TestUser2", DepartmentId = 2 },
+                new User { Id = 3, UserName = "TestUser3", Password = "TestUser3", DepartmentId = 3 },
+                new User { Id = 4, UserName = "Master", Password = "Master", DepartmentId = 4 }
+            );
+        }
 
     }
 }
