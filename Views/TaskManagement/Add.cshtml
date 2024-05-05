@@ -30,10 +30,23 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="TeamMembers" class="control-label">Select Users</label>
-                <select asp-for="TeamMembers" asp-items="@((IEnumerable<SelectListItem>)ViewData["Users"])" class="form-control" multiple></select>
-                <span asp-validation-for="TeamMembers" class="text-danger"></span>
+                <label asp-for="AssignedUserIds" class="control-label">Select Users</label>
+                <select asp-for="AssignedUserIds" asp-items="@((IEnumerable<SelectListItem>)ViewData["Users"])" class="form-control" multiple></select>
+                <span asp-validation-for="AssignedUserIds" class="text-danger"></span>
             </div>
+
+           @*  <div class="form-group" id="comments-container">
+                <label for="Comments" class="control-label">Comments</label>
+                <div id="comments">
+                    @for (var i = 0; i < Model?.Comments?.Count; i++)
+                    {
+                        <textarea name="Comments[@i].Text" class="form-control">@Model.Comments[i].Text</textarea>
+                        <span class="text-danger" data-valmsg-for="Comments[@i].Text" data-valmsg-replace="true"></span>
+                    }
+                </div>
+                <button type="button" id="add-comment-btn" class="btn btn-primary">Add Comment</button>
+            </div> *@
+
 
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
@@ -47,5 +60,15 @@
 </div>
 
 @section Scripts {
+@*    <script>
+        $(document).ready(function () {
+                $("#add-comment-btn").click(function () {
+                    var count = $("#comments").children().length;
+                    var newComment = '<textarea name="Comments[' + count + ']" class="form-control"></textarea>';
+                    newComment += '<span class="text-danger" data-valmsg-for="Comments[' + count + '].Text" data-valmsg-replace="true"></span>';
+                $("#comments").append(newComment);
+            });
+        });
+   </script> *@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

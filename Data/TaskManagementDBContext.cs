@@ -34,6 +34,12 @@ namespace TaskManagementSystem.Data
                 new User { Id = 3, UserName = "TestUser3", Password = "TestUser3", DepartmentId = 3 },
                 new User { Id = 4, UserName = "Master", Password = "Master", DepartmentId = 4 }
             );
+
+            modelBuilder.Entity<Status>().HasData(
+                new Status { Id = 1, Name = "New"},
+                new Status { Id = 2, Name = "In Progress"},
+                new Status { Id = 3, Name = "Completed"}
+            );
         }
 
     }
