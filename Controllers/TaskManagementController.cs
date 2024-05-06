@@ -71,6 +71,76 @@ namespace TaskManagementSystem.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+
+            var taskEntity = await _context.Tasks.Include(st => st.Status)
+                            .Include(cm => cm.Comments).FirstOrDefaultAsync(m => m.Id == id);
+
+
+            TaskManagementSystem.Models.TaskModel taskModel = new TaskManagementSystem.Models.TaskModel
+            {
+                Id = taskEntity.Id,
+                Title = taskEntity.Title,
+                Deadline = taskEntity.Deadline,
+                Status = new List<StatusModel>
+                {
+                   new StatusModel{ Id=taskEntity.Id,Status=taskEntity.Status.Name}
+
+                }
+
+            };
+
+
+            if (taskModel == null)
+            {
+                return NotFound();
+            }
+
+            return View(taskModel);
+        }
+
+
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+
+
+            var taskEntity = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id);
+
+
+            TaskManagementSystem.Models.TaskModel taskModel = new TaskManagementSystem.Models.TaskModel
+            {
+                Id = taskEntity.Id,
+                Title = taskEntity.Title,
+                Deadline = taskEntity.Deadline,
+                StatusId = taskEntity.StatusId,
+
+            };
+            var statusOptions = _context.Statuses.ToList();
+            ViewData["StatusOptions"] = new SelectList(statusOptions, "Id", "Name", taskEntity.StatusId);
+
+
+            if (taskModel == null)
+            {
+                return NotFound();
+            }
+
+            return View(taskModel);
+        }
+
+
+
+        [HttpPost]
         public async Task<ActionResult> Delete(int id)
         {
             var task = _context.Tasks.Find(id);

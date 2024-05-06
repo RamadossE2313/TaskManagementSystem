@@ -26,7 +26,16 @@
                     <div>@comment.Text</div>
                 }
             </td>
+
             <td>
+                @using (Html.BeginForm("Edit", "TaskManagement", new { id = item.Id }, FormMethod.Post))
+                {
+                    <button type="submit" class="btn btn-primary">Edit</button>
+                }
+                @using (Html.BeginForm("Details", "TaskManagement", new { id = item.Id }, FormMethod.Post))
+                {
+                    <button type="submit" class="btn btn-info">Details</button>
+                }
                 @using (Html.BeginForm("Delete", "TaskManagement", new { id = item.Id }, FormMethod.Post))
                 {
                     <button type="submit" class="btn btn-danger">Delete</button>
