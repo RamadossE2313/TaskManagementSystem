@@ -10,6 +10,7 @@ namespace TaskManagementSystem.Models
         [Required]
         public DateTime Deadline { get; set; }
         public int DepartmentId { get; set; }
+        public List<StatusModel> Status { get; set; }
         public int StatusId { get; set; }
         public List<int> AssignedUserIds { get; set; }
         public List<CommentsModel> Comments { get; set; }

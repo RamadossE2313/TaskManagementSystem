@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using TaskManagementSystem.Data;
 using TaskManagementSystem.Models;
 
@@ -19,7 +20,8 @@ namespace TaskManagementSystem.Controllers
         /// <returns></returns>
         public IActionResult Dashboard(int departmentId)
         {
-            var tasks = _context.Tasks;
+            var tasks = _context.Tasks.Include(st=>st.Status)
+                                      .Include(cm=>cm.Comments).ToList();
             return View(tasks);
         }
 
@@ -42,8 +44,8 @@ namespace TaskManagementSystem.Controllers
         [HttpPost]
         public async Task<ActionResult> Add(TaskModel taskModel)
         {
-            if (ModelState.IsValid)
-            {
+            //if (ModelState.IsValid)
+            //{
                 var task = new Entity.Task
                 {
                     Title = taskModel.Title,
@@ -63,10 +65,80 @@ namespace TaskManagementSystem.Controllers
                 _context.Add(task);
                 await _context.SaveChangesAsync();
                 return RedirectToAction("Dashboard");
+            //}
+
+            return View(taskModel);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+
+            var taskEntity = await _context.Tasks.Include(st => st.Status)
+                            .Include(cm => cm.Comments).FirstOrDefaultAsync(m => m.Id == id);
+
+
+            TaskManagementSystem.Models.TaskModel taskModel = new TaskManagementSystem.Models.TaskModel
+            {
+                Id = taskEntity.Id,
+                Title = taskEntity.Title,
+                Deadline = taskEntity.Deadline,
+                Status = new List<StatusModel>
+                {
+                   new StatusModel{ Id=taskEntity.Id,Status=taskEntity.Status.Name}
+
+                }
+
+            };
+
+
+            if (taskModel == null)
+            {
+                return NotFound();
             }
 
             return View(taskModel);
         }
+
+
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+
+
+            var taskEntity = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id);
+
+
+            TaskManagementSystem.Models.TaskModel taskModel = new TaskManagementSystem.Models.TaskModel
+            {
+                Id = taskEntity.Id,
+                Title = taskEntity.Title,
+                Deadline = taskEntity.Deadline,
+                StatusId = taskEntity.StatusId,
+
+            };
+            var statusOptions = _context.Statuses.ToList();
+            ViewData["StatusOptions"] = new SelectList(statusOptions, "Id", "Name", taskEntity.StatusId);
+
+
+            if (taskModel == null)
+            {
+                return NotFound();
+            }
+
+            return View(taskModel);
+        }
+
+
 
         [HttpPost]
         public async Task<ActionResult> Delete(int id)

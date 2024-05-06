@@ -9,6 +9,7 @@
 <table class="table">
     <tr>
         <th>Title</th>
+        <th>Status</th>
         <th>Deadline</th>
         <th>Comments</th>
         <th>Actions</th>
@@ -17,9 +18,24 @@
     {
         <tr>
             <td>@item.Title</td>
+            <td>@item.Status.Name</td>
             <td>@item.Deadline.ToShortDateString()</td>
-            <td>@item.Comments</td>
             <td>
+                @foreach (var comment in item.Comments)
+                {
+                    <div>@comment.Text</div>
+                }
+            </td>
+
+            <td class="action-buttons">
+                @using (Html.BeginForm("Edit", "TaskManagement", new { id = item.Id }, FormMethod.Post))
+                {
+                    <button type="submit" class="btn btn-primary">Edit</button>
+                }
+                @using (Html.BeginForm("Details", "TaskManagement", new { id = item.Id }, FormMethod.Post))
+                {
+                    <button type="submit" class="btn btn-info">Details</button>
+                }
                 @using (Html.BeginForm("Delete", "TaskManagement", new { id = item.Id }, FormMethod.Post))
                 {
                     <button type="submit" class="btn btn-danger">Delete</button>
@@ -28,3 +44,12 @@
         </tr>
     }
 </table>
+
+
+<style>
+    /* CSS to display buttons in the same row */
+    .action-buttons {
+        display: flex;
+        gap: 5px; /* Adjust spacing between buttons as needed */
+    }
+</style>
