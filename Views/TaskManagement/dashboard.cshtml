@@ -9,6 +9,7 @@
 <table class="table">
     <tr>
         <th>Title</th>
+        <th>Status</th>
         <th>Deadline</th>
         <th>Comments</th>
         <th>Actions</th>
@@ -17,6 +18,7 @@
     {
         <tr>
             <td>@item.Title</td>
+            <td>@item.Status.Name</td>
             <td>@item.Deadline.ToShortDateString()</td>
             <td>@item.Comments</td>
             <td>
