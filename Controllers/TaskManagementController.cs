@@ -19,7 +19,8 @@ namespace TaskManagementSystem.Controllers
         /// <returns></returns>
         public IActionResult Dashboard(int departmentId)
         {
-            var tasks = _context.Tasks;
+            var tasks = _context.Tasks.Include(st=>st.Status)
+                                      .Include(cm=>cm.Comments).ToList();
             return View(tasks);
         }
 
