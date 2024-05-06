@@ -20,9 +20,27 @@ namespace TaskManagementSystem.Controllers
         /// <returns></returns>
         public IActionResult Dashboard(int departmentId)
         {
-            var tasks = _context.Tasks.Include(st=>st.Status)
-                                      .Include(cm=>cm.Comments).ToList();
-            return View(tasks);
+            List<DashboardModel> dashboardList = new List<DashboardModel>();
+
+            var tasks = _context.Tasks.Include(t => t.Status)
+                                      .Include(t => t.Comments)
+                                      .Include(t => t.TeamMembers).ToList();
+
+            foreach (var task in tasks)
+            {
+                DashboardModel dashboardModel = new DashboardModel
+                {
+                    Id = task.Id,
+                    Title = task.Title,
+                    Deadline =  task.Deadline,
+                    Status = task.Status.Name.ToString(),
+                    AssignedUsers = string.Join(',', task.TeamMembers.Select(teamMember => teamMember.UserName).ToList()),
+                    Comment = task.Comments?.FirstOrDefault()?.Text,
+                };
+
+                dashboardList.Add(dashboardModel);
+            }
+            return View(dashboardList);
         }
 
         public ActionResult Add()
@@ -44,8 +62,17 @@ namespace TaskManagementSystem.Controllers
         [HttpPost]
         public async Task<ActionResult> Add(TaskModel taskModel)
         {
-            //if (ModelState.IsValid)
-            //{
+            if (ModelState.IsValid)
+            {
+                var addComment = new Entity.Comment
+                {
+                    Text = taskModel.Comment,
+                    PostedAt = DateTime.UtcNow,
+                };
+
+                _context.Comments.AddAsync(addComment);
+                var commentId = await _context.SaveChangesAsync();
+
                 var task = new Entity.Task
                 {
                     Title = taskModel.Title,
@@ -62,10 +89,11 @@ namespace TaskManagementSystem.Controllers
                     }
                 }
 
+                task.Comments.Add(addComment);
                 _context.Add(task);
                 await _context.SaveChangesAsync();
                 return RedirectToAction("Dashboard");
-            //}
+            }
 
             return View(taskModel);
         }
@@ -88,11 +116,11 @@ namespace TaskManagementSystem.Controllers
                 Id = taskEntity.Id,
                 Title = taskEntity.Title,
                 Deadline = taskEntity.Deadline,
-                Status = new List<StatusModel>
-                {
-                   new StatusModel{ Id=taskEntity.Id,Status=taskEntity.Status.Name}
+                //Status = new List<StatusModel>
+                //{
+                //   new StatusModel{ Id=taskEntity.Id,Status=taskEntity.Status.Name}
 
-                }
+                //}
 
             };
 

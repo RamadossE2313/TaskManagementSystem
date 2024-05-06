@@ -1,4 +1,4 @@
-﻿@model IEnumerable<TaskManagementSystem.Entity.Task>
+﻿@model IEnumerable<TaskManagementSystem.Models.DashboardModel>
 
 <h2>Tasks</h2>
 
@@ -11,6 +11,7 @@
         <th>Title</th>
         <th>Status</th>
         <th>Deadline</th>
+        <th>Assigned Users</th>
         <th>Comments</th>
         <th>Actions</th>
     </tr>
@@ -18,15 +19,10 @@
     {
         <tr>
             <td>@item.Title</td>
-            <td>@item.Status.Name</td>
+            <td>@item.Status</td>
             <td>@item.Deadline.ToShortDateString()</td>
-            <td>
-                @foreach (var comment in item.Comments)
-                {
-                    <div>@comment.Text</div>
-                }
-            </td>
-
+            <td>@item.AssignedUsers</td>
+            <td>@item.Comment</td>
             <td class="action-buttons">
                 @using (Html.BeginForm("Edit", "TaskManagement", new { id = item.Id }, FormMethod.Post))
                 {
