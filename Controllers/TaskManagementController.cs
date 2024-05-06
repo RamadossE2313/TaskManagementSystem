@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using TaskManagementSystem.Data;
 using TaskManagementSystem.Models;
 
@@ -43,8 +44,8 @@ namespace TaskManagementSystem.Controllers
         [HttpPost]
         public async Task<ActionResult> Add(TaskModel taskModel)
         {
-            if (ModelState.IsValid)
-            {
+            //if (ModelState.IsValid)
+            //{
                 var task = new Entity.Task
                 {
                     Title = taskModel.Title,
@@ -64,7 +65,7 @@ namespace TaskManagementSystem.Controllers
                 _context.Add(task);
                 await _context.SaveChangesAsync();
                 return RedirectToAction("Dashboard");
-            }
+            //}
 
             return View(taskModel);
         }
