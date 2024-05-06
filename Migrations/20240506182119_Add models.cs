@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TaskManagementSystem.Migrations
 {
-    public partial class EntityandModelsareadded : Migration
+    public partial class Addmodels : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -84,7 +84,9 @@ namespace TaskManagementSystem.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FileName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FilePath = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Length = table.Column<long>(type: "bigint", nullable: false),
+                    ContentType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Data = table.Column<byte[]>(type: "varbinary(max)", nullable: false),
                     TaskId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -150,6 +152,16 @@ namespace TaskManagementSystem.Migrations
                     { 2, "HR" },
                     { 3, "NON IT" },
                     { 4, "Admin" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Statuses",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "New" },
+                    { 2, "In Progress" },
+                    { 3, "Completed" }
                 });
 
             migrationBuilder.InsertData(

@@ -1,16 +1,14 @@
 ﻿@model TaskManagementSystem.Models.TaskModel
 
 @{
-    ViewData["Title"] = "Add";
+    ViewData["Title"] = "Add Task";
 }
 
-<h1>Add</h1>
-
-<h4>Task</h4>
+<h4>Add Task</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Add">
+        <form asp-action="AddTask" enctype="multipart/form-data" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="Title" class="control-label"></label>
@@ -39,6 +37,10 @@
                 <label asp-for="Comment"></label>
                 <textarea asp-for="Comment" class="form-control"></textarea>
                 <span asp-validation-for="Comment" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="file" name="Files" multiple accept=".jpg,.png,.gif" class="form-control" />
             </div>
 
             <div class="form-group">
