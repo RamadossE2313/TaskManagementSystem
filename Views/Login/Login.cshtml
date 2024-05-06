@@ -1,20 +1,42 @@
 ﻿@model TaskManagementSystem.Models.UserModel
+<style>
+    /* Center the form controls */
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
 
-<h2>Login</h2>
+    /* Fix width of textboxes */
+    .form-group input[type="text"],
+    .form-group input[type="password"] {
+        width: 250px; /* Adjust width as needed */
+    }
 
-@using (Html.BeginForm())
-{
-    <div class="form-group">
-        @Html.LabelFor(model => model.UserName)
-        @Html.TextBoxFor(model => model.UserName, new { @class = "form-control" })
-    </div>
+    /* Style the submit button */
+    .form-group button[type="submit"] {
+        margin-top: 10px;
+    }
+</style>
 
-    <div class="form-group">
-        @Html.LabelFor(model => model.Password)
-        @Html.PasswordFor(model => model.Password, new { @class = "form-control" })
-    </div>
 
-    <button type="submit" class="btn btn-primary">Login</button>
 
-    @Html.ValidationSummary()
-}
+
+<div class="form-container">
+    @using (Html.BeginForm())
+    {
+            <div class="form-group">
+            @Html.LabelFor(model => model.UserName)
+            @Html.TextBoxFor(model => model.UserName, new { @class = "form-control" })
+            </div>
+
+            <div class="form-group">
+            @Html.LabelFor(model => model.Password)
+            @Html.PasswordFor(model => model.Password, new { @class = "form-control" })
+            </div>
+
+            <button type="submit" class="btn btn-primary">Login</button>
+
+        @Html.ValidationSummary()
+    }
+</div>
