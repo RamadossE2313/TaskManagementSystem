@@ -27,7 +27,7 @@
                 }
             </td>
 
-            <td>
+            <td class="action-buttons">
                 @using (Html.BeginForm("Edit", "TaskManagement", new { id = item.Id }, FormMethod.Post))
                 {
                     <button type="submit" class="btn btn-primary">Edit</button>
@@ -44,3 +44,12 @@
         </tr>
     }
 </table>
+
+
+<style>
+    /* CSS to display buttons in the same row */
+    .action-buttons {
+        display: flex;
+        gap: 5px; /* Adjust spacing between buttons as needed */
+    }
+</style>
