@@ -20,7 +20,12 @@
             <td>@item.Title</td>
             <td>@item.Status.Name</td>
             <td>@item.Deadline.ToShortDateString()</td>
-            <td>@item.Comments</td>
+            <td>
+                @foreach (var comment in item.Comments)
+                {
+                    <div>@comment.Text</div>
+                }
+            </td>
             <td>
                 @using (Html.BeginForm("Delete", "TaskManagement", new { id = item.Id }, FormMethod.Post))
                 {
