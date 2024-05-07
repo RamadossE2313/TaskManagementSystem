@@ -10,6 +10,27 @@ builder.Services.AddDbContext<TaskManagementDBContext>(options =>
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddSession(options =>
+{
+    // Set a short timeout for easy testing.
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = "Cookies";
+    options.DefaultSignInScheme = "Cookies";
+    options.DefaultChallengeScheme = "Cookies";
+})
+    .AddCookie("Cookies", options =>
+    {
+        options.Cookie.Name = "Tasks";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+        options.SlidingExpiration = true;
+    });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -24,8 +45,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
 
 app.MapControllerRoute(
     name: "default",

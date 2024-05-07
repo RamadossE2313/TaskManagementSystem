@@ -1,0 +1,76 @@
+﻿@model IEnumerable<TaskManagementSystem.Models.DashboardModel>
+
+<h2>Kanban</h2>
+
+<p>
+    @Html.ActionLink("Add Task", "AddTask")
+</p>
+
+<div class="card-container">
+    @foreach (var status in new[] { "New", "Pending", "Done" })
+    {
+        <div class="status-group">
+            <h3>@status</h3>
+            @foreach (var task in Model.Where(x => x.Status == status))
+            {
+                <div class="card @status.ToLower()">
+                    <h4>@task.Title</h4>
+                    <p><strong>Deadline:</strong> @task.Deadline.ToShortDateString()</p>
+                    <p><strong>Assigned Users:</strong> @task.AssignedUsers</p>
+                    <p><strong>Comments:</strong> @task.Comment</p>
+                    <div class="action-buttons">
+                        @using (Html.BeginForm("Edit", "TaskManagement", new { id = task.Id }, FormMethod.Post))
+                        {
+                            <button type="submit" class="btn btn-primary">Edit</button>
+                        }
+                        @using (Html.BeginForm("Details", "TaskManagement", new { id = task.Id }, FormMethod.Post))
+                        {
+                            <button type="submit" class="btn btn-info">Details</button>
+                        }
+                        @using (Html.BeginForm("Delete", "TaskManagement", new { id = task.Id }, FormMethod.Post))
+                        {
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .card-container {
+        display: flex;
+        justify-content: space-around;
+        gap: 20px; /* Adjust spacing between status groups */
+    }
+
+    .status-group {
+        width: 30%; /* Adjust width of each status group */
+    }
+
+    .card {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 5px; /* Adjust spacing between buttons */
+    }
+
+    /* Color coding based on status */
+    .new {
+        background-color: lightgray;
+    }
+
+    .pending {
+        background-color: orange;
+    }
+
+    .done {
+        background-color: green;
+    }
+</style>

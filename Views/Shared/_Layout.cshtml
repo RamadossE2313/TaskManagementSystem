@@ -17,6 +17,18 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav">
+                        @if (ViewData["isAuth"] != null && (bool)ViewData["isAuth"])
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Dashboard", "TaskManagement")">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Kanban", "TaskManagement")">Kanban</a>
+                            </li>
+                        }
+                    </ul>
+
                 </div>
             </div>
         </nav>
@@ -36,3 +48,15 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+<style>
+    .nav-link {
+        font-weight: bold; /* Make the links bold */
+        transition: all 0.3s ease; /* Add smooth transition effect */
+    }
+
+        .nav-link:hover {
+            color: red; /* Change the text color when mouse hovers over the link */
+            /* You can add additional effects here, such as changing background color or adding a border */
+        }
+
+</style>

@@ -17,9 +17,16 @@ namespace TaskManagementSystem.Data
         public DbSet<Attachment> Attachments { get; set; }
         public DbSet<Comment> Comments { get; set; }
 
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
+            //modelBuilder.Entity<>()
+            //    .HasOne()
+            //    .WithMany(t => t.Comments)
+            //    .HasForeignKey(c => c.TaskId)
+            //    .OnDelete(DeleteBehavior.Cascade); // Enable cascading delete
+
+            //base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Department>().HasData(
                 new Department { Id = 1, Name = "IT" },

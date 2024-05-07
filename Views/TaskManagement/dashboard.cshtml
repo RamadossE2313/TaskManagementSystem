@@ -1,6 +1,6 @@
 ﻿@model IEnumerable<TaskManagementSystem.Models.DashboardModel>
 
-<h2>Tasks</h2>
+<h2>Dashboard</h2>
 
 <p>
     @Html.ActionLink("Add Task", "AddTask")
@@ -18,8 +18,11 @@
     @foreach (var item in Model)
     {
         <tr>
+            <div id="popup" class="popup">
+                Task saved successfully!
+            </div>
             <td>@item.Title</td>
-            <td>@item.Status</td>
+            <td style="color: @(item.Status == "Done" ? "green" : item.Status == "Pending" ? "orange" : "")">@item.Status</td>
             <td>@item.Deadline.ToShortDateString()</td>
             <td>@item.AssignedUsers</td>
             <td>@item.Comment</td>
@@ -41,6 +44,22 @@
     }
 </table>
 
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Check if the URL contains a success parameter
+            var urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('success')) {
+                // Show the popup
+                $('#popup').show();
+                // Hide the popup after 3 seconds (3000 milliseconds)
+                setTimeout(function () {
+                    $('#popup').hide();
+                }, 3000);
+            }
+        });
+    </script>
+}
 
 <style>
     /* CSS to display buttons in the same row */
@@ -48,4 +67,18 @@
         display: flex;
         gap: 5px; /* Adjust spacing between buttons as needed */
     }
+    .popup {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #4CAF50; /* Green color */
+    color: white; /* Text color */
+    font-weight: bold; /* Bold text */
+    padding: 15px;
+    border-radius: 5px;
+    z-index: 9999;
+}
+
+
 </style>

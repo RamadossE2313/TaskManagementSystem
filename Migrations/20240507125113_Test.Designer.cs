@@ -12,8 +12,8 @@ using TaskManagementSystem.Data;
 namespace TaskManagementSystem.Migrations
 {
     [DbContext(typeof(TaskManagementDBContext))]
-    [Migration("20240506182119_Add models")]
-    partial class Addmodels
+    [Migration("20240507125113_Test")]
+    partial class Test
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

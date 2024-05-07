@@ -1,19 +1,27 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Packaging;
+using System.Security.Claims;
 using TaskManagementSystem.Data;
 using TaskManagementSystem.Entity;
 using TaskManagementSystem.Models;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace TaskManagementSystem.Controllers
 {
     public class TaskManagementController : Controller
     {
         private readonly TaskManagementDBContext _context;
-        public TaskManagementController(TaskManagementDBContext taskManagementDBContext)
+        private readonly ILogger<TaskManagementController> _logger;
+        public TaskManagementController(TaskManagementDBContext taskManagementDBContext, ILogger<TaskManagementController> logger)
         {
             _context = taskManagementDBContext;
+            _logger = logger;
         }
 
         /// <summary>
@@ -23,40 +31,102 @@ namespace TaskManagementSystem.Controllers
         public IActionResult Dashboard(int departmentId)
         {
             List<DashboardModel> dashboardList = new List<DashboardModel>();
-
-            var tasks = _context.Tasks.Include(t => t.Status)
-                                      .Include(t => t.Comments)
-                                      .Include(t => t.TeamMembers).ToList();
-
-            foreach (var task in tasks)
+            try
             {
-                DashboardModel dashboardModel = new DashboardModel
+                if (!isAuth())
                 {
-                    Id = task.Id,
-                    Title = task.Title,
-                    Deadline =  task.Deadline,
-                    Status = task.Status.Name.ToString(),
-                    AssignedUsers = string.Join(',', task.TeamMembers.Select(teamMember => teamMember.UserName).ToList()),
-                    Comment = task.Comments?.FirstOrDefault()?.Text,
-                };
+                    return Redirect("~/");
+                }
 
-                dashboardList.Add(dashboardModel);
+                var tasks = _context.Tasks.Include(t => t.Status)
+                                     .Include(t => t.Comments)
+                                     .Include(t => t.TeamMembers).ToList();
+
+                foreach (var task in tasks)
+                {
+                    DashboardModel dashboardModel = new DashboardModel
+                    {
+                        Id = task.Id,
+                        Title = task.Title,
+                        Deadline = task.Deadline,
+                        Status = task.Status.Name.ToString(),
+                        AssignedUsers = string.Join(',', task.TeamMembers.Select(teamMember => teamMember.UserName).ToList()),
+                        Comment = task.Comments?.FirstOrDefault()?.Text,
+                    };
+
+                    dashboardList.Add(dashboardModel);
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving dashboard.");
+                return View("Error");
+            }
+            return View(dashboardList);
+        }
+
+       
+
+        public IActionResult Kanban(int departmentId)
+        {
+            List<DashboardModel> dashboardList = new List<DashboardModel>();
+            try
+            {
+                if (!isAuth())
+                {
+                    return Redirect("~/");
+                }
+
+
+
+                var tasks = _context.Tasks.Include(t => t.Status)
+                                          .Include(t => t.Comments)
+                                          .Include(t => t.TeamMembers).ToList();
+
+                foreach (var task in tasks)
+                {
+                    DashboardModel dashboardModel = new DashboardModel
+                    {
+                        Id = task.Id,
+                        Title = task.Title,
+                        Deadline = task.Deadline,
+                        Status = task.Status.Name.ToString(),
+                        AssignedUsers = string.Join(',', task.TeamMembers.Select(teamMember => teamMember.UserName).ToList()),
+                        Comment = task.Comments?.FirstOrDefault()?.Text,
+                    };
+
+                    dashboardList.Add(dashboardModel);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving Kanban.");
+                return View("Error");
+            }
+
             return View(dashboardList);
         }
 
         public ActionResult AddTask()
         {
-            var users = _context.Users;
-            ViewData["Users"] = new SelectList(users, "Id", "UserName");
+            try
+            {
+                var users = _context.Users;
+                ViewData["Users"] = new SelectList(users, "Id", "UserName");
 
-            var statusOptions = new List<SelectListItem>
+                var statusOptions = new List<SelectListItem>
             {
                 new SelectListItem { Value = "1", Text = "New" },
                 new SelectListItem { Value = "2", Text = "In Progress" },
                 new SelectListItem { Value = "3", Text = "Completed" }
             };
-            ViewData["StatusOptions"] = statusOptions;
+                ViewData["StatusOptions"] = statusOptions;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
+                return View("Error");
+            }
 
             return View();
         }
@@ -64,81 +134,109 @@ namespace TaskManagementSystem.Controllers
         [HttpPost]
         public async Task<ActionResult> AddTask(TaskModel taskModel)
         {
-            if (ModelState.IsValid)
+            try
             {
-                var task = new Entity.Task
+                if (ModelState.IsValid)
                 {
-                    Title = taskModel.Title,
-                    Deadline = taskModel.Deadline,
-                    StatusId = taskModel.StatusId,
-                };
+                    var task = new Entity.Task
+                    {
+                        Title = taskModel.Title,
+                        Deadline = taskModel.Deadline,
+                        StatusId = taskModel.StatusId,
+                    };
 
-                Comment addComment = await AddCommentAsync(taskModel);
-                task.Comments.Add(addComment);
+                    Comment addComment = await AddCommentAsync(taskModel);
+                    task.Comments.Add(addComment);
 
-                if (taskModel.Files.Count() > 0)
-                {
-                    List<Attachment> attachments = await AddAttachmentAsync(taskModel);
-                    task.Attachments.AddRange(attachments);
+                    if (taskModel.Files.Count() > 0)
+                    {
+                        List<Attachment> attachments = await AddAttachmentAsync(taskModel);
+                        task.Attachments.AddRange(attachments);
+                    }
+
+                    if (taskModel.AssignedUserIds.Count > 0)
+                    {
+                        List<User> users = await AddAssignedUserAsync(taskModel);
+                        task.TeamMembers.AddRange(users);
+                    }
+
+                    _context.Add(task);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction("Dashboard", new { success = true });
                 }
-
-                if(taskModel.AssignedUserIds.Count > 0)
-                {
-                    List<User> users = await AddAssignedUserAsync(taskModel);
-                    task.TeamMembers.AddRange(users);
-                }
-
-                _context.Add(task);
-                await _context.SaveChangesAsync();
-                return RedirectToAction("Dashboard");
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
+                return View("Error");
+            }
+
+            
 
             return View(taskModel);
         }
 
         private async Task<Comment> AddCommentAsync(TaskModel taskModel)
         {
-            var addComment = new Comment
+            try
             {
-                Text = taskModel.Comment,
-                PostedAt = DateTime.UtcNow,
-            };
+                var addComment = new Comment
+                {
+                    Text = taskModel.Comment,
+                    PostedAt = DateTime.UtcNow,
+                };
 
-            _context.Comments.Add(addComment);
-            await _context.SaveChangesAsync();
-            return addComment;
+                _context.Comments.Add(addComment);
+                await _context.SaveChangesAsync();
+                return addComment;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
+                return new Comment();
+            }
+
         }
 
         private async Task<List<Attachment>> AddAttachmentAsync(TaskModel taskModel)
         {
             List<Attachment> attachments = new List<Attachment>();
 
-            foreach (var file in taskModel.Files)
+            try
             {
-                if (file.Length > 0)
+
+                foreach (var file in taskModel.Files)
                 {
-                    var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-
-                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads", uniqueFileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                    if (file.Length > 0)
                     {
-                        await file.CopyToAsync(stream);
+                        var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+
+                        var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads", uniqueFileName);
+
+                        using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                        {
+                            await file.CopyToAsync(stream);
+                        }
+
+                        var fileModel = new Attachment
+                        {
+                            FileName = uniqueFileName,
+                            Length = file.Length,
+                            ContentType = file.ContentType,
+                            Data = System.IO.File.ReadAllBytes(filePath)
+                        };
+
+                        _context.Attachments.Add(fileModel);
+                        await _context.SaveChangesAsync();
+                        attachments.Add(fileModel);
                     }
-
-                    var fileModel = new Attachment
-                    {
-                        FileName = uniqueFileName,
-                        Length = file.Length,
-                        ContentType = file.ContentType,
-                        Data = System.IO.File.ReadAllBytes(filePath)
-                    };
-
-                    _context.Attachments.Add(fileModel);
-                    await _context.SaveChangesAsync();
-                    attachments.Add(fileModel);
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
+            }
+
             return attachments;
         }
 
@@ -146,13 +244,22 @@ namespace TaskManagementSystem.Controllers
         {
             List<User> assignedUsers = new List<User>();
 
-            foreach (var userId in taskModel.AssignedUserIds)
+            try
             {
-                var user = await _context.Users.FirstOrDefaultAsync(user => user.Id == userId);
-                if (user != null)
+                foreach (var userId in taskModel.AssignedUserIds)
                 {
-                    assignedUsers.Add(user);
+                    var user = await _context.Users.FirstOrDefaultAsync(user => user.Id == userId);
+                    if (user != null)
+                    {
+                        assignedUsers.Add(user);
+                    }
                 }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
+
             }
 
             return assignedUsers;
@@ -161,30 +268,29 @@ namespace TaskManagementSystem.Controllers
         [HttpPost]
         public async Task<IActionResult> Details(int? id)
         {
+            TaskManagementSystem.Models.TaskModel taskModel;
+
             if (id == null)
             {
                 return NotFound();
             }
 
-
-            var taskEntity = await _context.Tasks.Include(st => st.Status)
-                            .Include(cm => cm.Comments).FirstOrDefaultAsync(m => m.Id == id);
-
-
-            TaskManagementSystem.Models.TaskModel taskModel = new TaskManagementSystem.Models.TaskModel
+            try
             {
-                Id = taskEntity.Id,
-                Title = taskEntity.Title,
-                Deadline = taskEntity.Deadline,
-                //Status = new List<StatusModel>
-                //{
-                //   new StatusModel{ Id=taskEntity.Id,Status=taskEntity.Status.Name}
-
-                //}
-
-            };
-
-
+                var taskEntity = await _context.Tasks.Include(st => st.Status)
+                          .Include(cm => cm.Comments).FirstOrDefaultAsync(m => m.Id == id);
+                taskModel = new TaskManagementSystem.Models.TaskModel
+                {
+                    Id = taskEntity.Id,
+                    Title = taskEntity.Title,
+                    Deadline = taskEntity.Deadline,
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
+                return View("Error");
+            }
             if (taskModel == null)
             {
                 return NotFound();
@@ -195,28 +301,37 @@ namespace TaskManagementSystem.Controllers
         
         public async Task<IActionResult> Edit(int? id)
         {
+            TaskModel taskModel;
+
             if (id == null)
             {
                 return NotFound();
             }
 
-
-
-            var taskEntity = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id);
-
-
-            TaskModel taskModel = new TaskModel
+            try
             {
-                Id = taskEntity.Id,
-                Title = taskEntity.Title,
-                Deadline = taskEntity.Deadline,
-                StatusId = taskEntity.StatusId,
+                var taskEntity = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id);
+                taskModel = new TaskModel
+                {
+                    Id = taskEntity.Id,
+                    Title = taskEntity.Title,
+                    Deadline = taskEntity.Deadline,
+                    StatusId = taskEntity.StatusId,
 
-            };
-            var statusOptions = _context.Statuses.ToList();
-            ViewData["StatusOptions"] = new SelectList(statusOptions, "Id", "Name", taskEntity.StatusId);
+                };
+                 var statusOptions = _context.Statuses.ToList();
+                ViewData["StatusOptions"] = new SelectList(statusOptions, "Id", "Name", taskEntity.StatusId);
 
+                //var taskModEnt = _context.Update(taskEntity);
+                //var Testuser1 = await _context.SaveChangesAsync();
+                //return RedirectToAction("Dashboard", new { success = true });
 
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
+                return View("Error");
+            }
             if (taskModel == null)
             {
                 return NotFound();
@@ -228,15 +343,62 @@ namespace TaskManagementSystem.Controllers
         [HttpPost]
         public async Task<ActionResult> Delete(int id)
         {
-            var task = _context.Tasks.Find(id);
-            if (task == null)
+            try
             {
-                return NotFound();
+
+                var task = _context.Tasks.Find(id);
+                if (task == null)
+                {
+                    return NotFound();
+                }
+
+                _context.Tasks.Remove(task);
+                _context.SaveChanges();
+                return RedirectToAction("Dashboard", new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
+                return View("Error");
+            }
+        }
+
+        public bool isAuth()
+        {
+            bool isAuthenticated = false;
+            try
+            {
+                var identityString = HttpContext.Session.GetString("Identity");
+                if (identityString != null)
+                {
+                    //var identity = JsonSerializer.Deserialize<ClaimsIdentity>(identityString);
+                    using (JsonDocument document = JsonDocument.Parse(identityString))
+                    {
+                        JsonElement root = document.RootElement;
+                        JsonElement isAuthenticatedElement = root.GetProperty("IsAuthenticated");
+                        isAuthenticated = isAuthenticatedElement.GetBoolean();
+                    }
+
+                }
+                else
+                {
+
+                    return false;
+                }
+                if (!isAuthenticated)
+                {
+                    return false;
+                }
+                ViewData["isAuth"] = isAuthenticated;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
+                return false;
             }
 
-            _context.Tasks.Remove(task);
-            _context.SaveChanges();
-            return RedirectToAction("Dashboard");
+            return isAuthenticated;
         }
+
     }
 }
