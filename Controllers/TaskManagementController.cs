@@ -1,16 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Packaging;
-using System.Security.Claims;
 using TaskManagementSystem.Data;
 using TaskManagementSystem.Entity;
 using TaskManagementSystem.Models;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
 
 namespace TaskManagementSystem.Controllers
 {
@@ -117,8 +112,8 @@ namespace TaskManagementSystem.Controllers
                 var statusOptions = new List<SelectListItem>
             {
                 new SelectListItem { Value = "1", Text = "New" },
-                new SelectListItem { Value = "2", Text = "In Progress" },
-                new SelectListItem { Value = "3", Text = "Completed" }
+                new SelectListItem { Value = "2", Text = "Pending" },
+                new SelectListItem { Value = "3", Text = "Done" }
             };
                 ViewData["StatusOptions"] = statusOptions;
             }
@@ -145,15 +140,6 @@ namespace TaskManagementSystem.Controllers
                         StatusId = taskModel.StatusId,
                     };
 
-                    Comment addComment = await AddCommentAsync(taskModel);
-                    task.Comments.Add(addComment);
-
-                    if (taskModel.Files.Count() > 0)
-                    {
-                        List<Attachment> attachments = await AddAttachmentAsync(taskModel);
-                        task.Attachments.AddRange(attachments);
-                    }
-
                     if (taskModel.AssignedUserIds.Count > 0)
                     {
                         List<User> users = await AddAssignedUserAsync(taskModel);
@@ -162,6 +148,16 @@ namespace TaskManagementSystem.Controllers
 
                     _context.Add(task);
                     await _context.SaveChangesAsync();
+
+                    Comment addComment = await AddCommentAsync(taskModel, task.Id);
+                    task.Comments.Add(addComment);
+
+                    if (taskModel.Files.Count() > 0)
+                    {
+                        List<Attachment> attachments = await AddAttachmentAsync(taskModel, task.Id);
+                        task.Attachments.AddRange(attachments);
+                    }
+
                     return RedirectToAction("Dashboard", new { success = true });
                 }
             }
@@ -176,7 +172,7 @@ namespace TaskManagementSystem.Controllers
             return View(taskModel);
         }
 
-        private async Task<Comment> AddCommentAsync(TaskModel taskModel)
+        private async Task<Comment> AddCommentAsync(TaskModel taskModel, int taskId)
         {
             try
             {
@@ -184,6 +180,7 @@ namespace TaskManagementSystem.Controllers
                 {
                     Text = taskModel.Comment,
                     PostedAt = DateTime.UtcNow,
+                    TaskId = taskId
                 };
 
                 _context.Comments.Add(addComment);
@@ -198,7 +195,7 @@ namespace TaskManagementSystem.Controllers
 
         }
 
-        private async Task<List<Attachment>> AddAttachmentAsync(TaskModel taskModel)
+        private async Task<List<Attachment>> AddAttachmentAsync(TaskModel taskModel, int taskId)
         {
             List<Attachment> attachments = new List<Attachment>();
 
@@ -223,7 +220,8 @@ namespace TaskManagementSystem.Controllers
                             FileName = uniqueFileName,
                             Length = file.Length,
                             ContentType = file.ContentType,
-                            Data = System.IO.File.ReadAllBytes(filePath)
+                            Data = System.IO.File.ReadAllBytes(filePath),
+                            TaskId = taskId
                         };
 
                         _context.Attachments.Add(fileModel);
@@ -345,7 +343,6 @@ namespace TaskManagementSystem.Controllers
         {
             try
             {
-
                 var task = _context.Tasks.Find(id);
                 if (task == null)
                 {

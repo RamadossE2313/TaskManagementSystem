@@ -12,8 +12,8 @@ using TaskManagementSystem.Data;
 namespace TaskManagementSystem.Migrations
 {
     [DbContext(typeof(TaskManagementDBContext))]
-    [Migration("20240507125113_Test")]
-    partial class Test
+    [Migration("20240507184724_Model relationships are modified")]
+    partial class Modelrelationshipsaremodified
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -47,7 +47,7 @@ namespace TaskManagementSystem.Migrations
                     b.Property<long>("Length")
                         .HasColumnType("bigint");
 
-                    b.Property<int?>("TaskId")
+                    b.Property<int>("TaskId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -68,7 +68,7 @@ namespace TaskManagementSystem.Migrations
                     b.Property<DateTime>("PostedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("TaskId")
+                    b.Property<int>("TaskId")
                         .HasColumnType("int");
 
                     b.Property<string>("Text")
@@ -133,6 +133,9 @@ namespace TaskManagementSystem.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("TaskId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Statuses");
@@ -141,17 +144,20 @@ namespace TaskManagementSystem.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "New"
+                            Name = "New",
+                            TaskId = 0
                         },
                         new
                         {
                             Id = 2,
-                            Name = "In Progress"
+                            Name = "Pending",
+                            TaskId = 0
                         },
                         new
                         {
                             Id = 3,
-                            Name = "Completed"
+                            Name = "Done",
+                            TaskId = 0
                         });
                 });
 
@@ -248,21 +254,29 @@ namespace TaskManagementSystem.Migrations
 
                     b.HasIndex("TeamMembersId");
 
-                    b.ToTable("TaskUser");
+                    b.ToTable("TaskUser", (string)null);
                 });
 
             modelBuilder.Entity("TaskManagementSystem.Entity.Attachment", b =>
                 {
-                    b.HasOne("TaskManagementSystem.Entity.Task", null)
+                    b.HasOne("TaskManagementSystem.Entity.Task", "Task")
                         .WithMany("Attachments")
-                        .HasForeignKey("TaskId");
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
                 });
 
             modelBuilder.Entity("TaskManagementSystem.Entity.Comment", b =>
                 {
-                    b.HasOne("TaskManagementSystem.Entity.Task", null)
+                    b.HasOne("TaskManagementSystem.Entity.Task", "Task")
                         .WithMany("Comments")
-                        .HasForeignKey("TaskId");
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
                 });
 
             modelBuilder.Entity("TaskManagementSystem.Entity.Task", b =>
@@ -270,7 +284,7 @@ namespace TaskManagementSystem.Migrations
                     b.HasOne("TaskManagementSystem.Entity.Status", "Status")
                         .WithMany("Tasks")
                         .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Status");

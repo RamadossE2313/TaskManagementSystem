@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TaskManagementSystem.Migrations
 {
-    public partial class Test : Migration
+    public partial class Modelrelationshipsaremodified : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -28,7 +28,8 @@ namespace TaskManagementSystem.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TaskId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -74,7 +75,7 @@ namespace TaskManagementSystem.Migrations
                         column: x => x.StatusId,
                         principalTable: "Statuses",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -87,7 +88,7 @@ namespace TaskManagementSystem.Migrations
                     Length = table.Column<long>(type: "bigint", nullable: false),
                     ContentType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Data = table.Column<byte[]>(type: "varbinary(max)", nullable: false),
-                    TaskId = table.Column<int>(type: "int", nullable: true)
+                    TaskId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -96,7 +97,8 @@ namespace TaskManagementSystem.Migrations
                         name: "FK_Attachments_Tasks_TaskId",
                         column: x => x.TaskId,
                         principalTable: "Tasks",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -107,7 +109,7 @@ namespace TaskManagementSystem.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PostedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    TaskId = table.Column<int>(type: "int", nullable: true)
+                    TaskId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -116,7 +118,8 @@ namespace TaskManagementSystem.Migrations
                         name: "FK_Comments_Tasks_TaskId",
                         column: x => x.TaskId,
                         principalTable: "Tasks",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -156,12 +159,12 @@ namespace TaskManagementSystem.Migrations
 
             migrationBuilder.InsertData(
                 table: "Statuses",
-                columns: new[] { "Id", "Name" },
+                columns: new[] { "Id", "Name", "TaskId" },
                 values: new object[,]
                 {
-                    { 1, "New" },
-                    { 2, "In Progress" },
-                    { 3, "Completed" }
+                    { 1, "New", 0 },
+                    { 2, "Pending", 0 },
+                    { 3, "Done", 0 }
                 });
 
             migrationBuilder.InsertData(

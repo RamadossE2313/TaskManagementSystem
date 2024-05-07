@@ -7,5 +7,8 @@
         public long Length { get; set; }
         public string ContentType { get; set; }
         public byte[] Data { get; set; }
+
+        public int TaskId { get; set; }
+        public virtual Task Task { get; set; }
     }
 }

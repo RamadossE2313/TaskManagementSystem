@@ -20,13 +20,32 @@ namespace TaskManagementSystem.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //modelBuilder.Entity<>()
-            //    .HasOne()
-            //    .WithMany(t => t.Comments)
-            //    .HasForeignKey(c => c.TaskId)
-            //    .OnDelete(DeleteBehavior.Cascade); // Enable cascading delete
+            modelBuilder.Entity<Entity.Task>()
+                .HasOne(t => t.Status)
+                .WithMany(s => s.Tasks)
+                .HasForeignKey(t => t.StatusId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            //base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Status>()
+               .HasMany(s => s.Tasks)
+               .WithOne(t => t.Status)
+               .HasForeignKey(t => t.StatusId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Entity.Task>()
+                .HasMany(t => t.TeamMembers)
+                .WithMany(u => u.Tasks)
+                .UsingEntity(j => j.ToTable("TaskUser"));
+
+            modelBuilder.Entity<Entity.Task>()
+                .HasMany(t => t.Attachments)
+                .WithOne(a => a.Task)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Entity.Task>()
+                .HasMany(t => t.Comments)
+                .WithOne(c => c.Task)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Department>().HasData(
                 new Department { Id = 1, Name = "IT" },
@@ -44,8 +63,8 @@ namespace TaskManagementSystem.Data
 
             modelBuilder.Entity<Status>().HasData(
                 new Status { Id = 1, Name = "New"},
-                new Status { Id = 2, Name = "In Progress"},
-                new Status { Id = 3, Name = "Completed"}
+                new Status { Id = 2, Name = "Pending"},
+                new Status { Id = 3, Name = "Done" }
             );
         }
 
