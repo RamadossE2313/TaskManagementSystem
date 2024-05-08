@@ -235,7 +235,7 @@ namespace TaskManagementSystem.Controllers
                 {
                     if (file.Length > 0)
                     {
-                        var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                        var uniqueFileName = file.FileName + Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
 
                         var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads", uniqueFileName);
 
