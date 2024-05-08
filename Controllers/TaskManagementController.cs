@@ -178,6 +178,78 @@ namespace TaskManagementSystem.Controllers
             return View(taskModel);
         }
 
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, TaskModel taskModel)
+        {
+
+            //var users = _context.Users;
+            //ViewData["Users"] = new SelectList(users, "Id", "UserName");
+
+            var users = await _context.Users.ToListAsync();
+            //ViewData["Users"] = new SelectList(users, "Id", "UserName", taskModel.AssignedUserIds);
+
+            if (taskModel.Title != null)
+            {
+                var taskEntity = await _context.Tasks
+                                                    .Include(st => st.Status)
+                                                    .Include(cm => cm.Comments)
+                                                    .Include(at => at.Attachments)
+                                                    .Include(t => t.TeamMembers)
+                                                    .FirstOrDefaultAsync(t => t.Id == id);
+
+                taskEntity.Title = taskModel.Title;
+                taskEntity.Deadline = taskModel.Deadline;
+                taskEntity.StatusId = taskModel.StatusId;
+
+                Comment addComment = await UpdateCommentAsync(taskModel, id);
+
+
+                _context.Tasks.Update(taskEntity);
+                await _context.SaveChangesAsync();
+                return RedirectToAction("Dashboard", new { success = true });
+            }
+            else
+            {
+                if (id == null)
+                {
+                    return NotFound();
+                }
+                var taskEntity = await _context.Tasks
+                    .Include(st => st.Status)
+                    .Include(cm => cm.Comments)
+                    .Include(at => at.Attachments)
+                    .Include(t=>t.TeamMembers)
+                    .FirstOrDefaultAsync(t => t.Id == id);
+                taskModel = new TaskModel
+                {
+                    Id = taskEntity.Id,
+                    Title = taskEntity.Title,
+                    Deadline = taskEntity.Deadline,
+                    StatusId = taskEntity.StatusId,
+                    Comment = taskEntity.Comments?.OrderByDescending(c => c.PostedAt)?.FirstOrDefault()?.Text,
+                    
+                };
+
+                var selectedUserIds = taskEntity.TeamMembers.Select(u => u.Id).ToList();
+                var userSelectList = users.Select(u => new SelectListItem
+                {
+                    Value = u.Id.ToString(),
+                    Text = u.UserName,
+                    Selected = selectedUserIds.Contains(u.Id),
+                    Group = new SelectListGroup { Name = selectedUserIds.Contains(u.Id) ? "Assigned" : "Not Assigned" } // Assign users to groups based on their assignment status
+                }).ToList();
+                ViewData["Users"] = new SelectList(userSelectList, "Value", "Text", selectedUserIds); // Pass selected IDs to preselect users
+
+
+                var statusOptions = _context.Statuses.ToList();
+                ViewData["StatusOptions"] = new SelectList(statusOptions, "Id", "Name", taskEntity.StatusId);
+                return View(taskModel);
+            }
+        }
+
+
         private async Task<Comment> AddCommentAsync(TaskModel taskModel, int taskId)
         {
             try
@@ -326,55 +398,7 @@ namespace TaskManagementSystem.Controllers
             return View(taskModel);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, TaskModel taskModel)
-        {
-            if (taskModel.Title != null)
-            {
-                var taskEntity = await _context.Tasks
-                                                    .Include(st => st.Status)
-                                                    .Include(cm => cm.Comments)
-                                                     .Include(at => at.Attachments)
-                                                    .FirstOrDefaultAsync(t => t.Id == id);
-
-                taskEntity.Title = taskModel.Title;
-                taskEntity.Deadline = taskModel.Deadline;
-                taskEntity.StatusId = taskModel.StatusId;
-   
-                Comment addComment = await UpdateCommentAsync(taskModel, id);
-
-
-                _context.Tasks.Update(taskEntity);
-                await _context.SaveChangesAsync();
-                return RedirectToAction("Dashboard", new { success = true });
-            }
-            else
-            {
-                if (id == null)
-                {
-                    return NotFound();
-                }
-                var taskEntity = await _context.Tasks
-                    .Include(st => st.Status)
-                    .Include(cm => cm.Comments)
-                     .Include(at=> at.Attachments)
-                    .FirstOrDefaultAsync(t => t.Id == id);
-                taskModel = new TaskModel
-                {
-                        Id = taskEntity.Id,
-                        Title = taskEntity.Title,
-                        Deadline = taskEntity.Deadline,
-                        StatusId = taskEntity.StatusId,
-                        Comment = taskEntity.Comments?.OrderByDescending(c => c.PostedAt)?.FirstOrDefault()?.Text,
-                };
-
-                var statusOptions = _context.Statuses.ToList();
-                ViewData["StatusOptions"] = new SelectList(statusOptions, "Id", "Name", taskEntity.StatusId);
-                return View(taskModel);
-            }
-        }
-
+       
         private bool TaskExists(int id)
         {
             return _context.Tasks.Any(e => e.Id == id);
