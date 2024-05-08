@@ -6,6 +6,7 @@ using TaskManagementSystem.Data;
 using TaskManagementSystem.Entity;
 using TaskManagementSystem.Models;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace TaskManagementSystem.Controllers
 {
@@ -48,7 +49,7 @@ namespace TaskManagementSystem.Controllers
                         Deadline = task.Deadline,
                         Status = task.Status.Name.ToString(),
                         AssignedUsers = string.Join(',', task.TeamMembers.Select(teamMember => teamMember.UserName).ToList()),
-                        Comment = task.Comments?.FirstOrDefault()?.Text,
+                        Comment = task.Comments?.OrderByDescending(c => c.PostedAt)?.FirstOrDefault()?.Text,
                         Attachment = task.Attachments?.FirstOrDefault()?.FileName,
                     };
 
@@ -91,7 +92,7 @@ namespace TaskManagementSystem.Controllers
                         Deadline = task.Deadline,
                         Status = task.Status.Name.ToString(),
                         AssignedUsers = string.Join(',', task.TeamMembers.Select(teamMember => teamMember.UserName).ToList()),
-                        Comment = task.Comments?.FirstOrDefault()?.Text,
+                        Comment = task.Comments?.OrderByDescending(c => c.PostedAt)?.FirstOrDefault()?.Text,
                         Attachment = task.Attachments?.FirstOrDefault()?.FileName,
                     };
 
@@ -189,6 +190,29 @@ namespace TaskManagementSystem.Controllers
                 };
 
                 _context.Comments.Add(addComment);
+                await _context.SaveChangesAsync();
+                return addComment;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
+                return new Comment();
+            }
+
+        }
+
+        private async Task<Comment> UpdateCommentAsync(TaskModel taskModel, int taskId)
+        {
+            try
+            {
+                var addComment = new Comment
+                {
+                    Text = taskModel.Comment,
+                    PostedAt = DateTime.UtcNow,
+                    TaskId = taskId
+                };
+
+                _context.Comments.Update(addComment);
                 await _context.SaveChangesAsync();
                 return addComment;
             }
@@ -301,47 +325,102 @@ namespace TaskManagementSystem.Controllers
 
             return View(taskModel);
         }
-        
-        public async Task<IActionResult> Edit(int? id)
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, TaskModel taskModel)
         {
-            TaskModel taskModel;
-
-            if (id == null)
+            if (taskModel.Title != null)
             {
-                return NotFound();
+                var taskEntity = await _context.Tasks
+                                                    .Include(st => st.Status)
+                                                    .Include(cm => cm.Comments)
+                                                     .Include(at => at.Attachments)
+                                                    .FirstOrDefaultAsync(t => t.Id == id);
+
+                taskEntity.Title = taskModel.Title;
+                taskEntity.Deadline = taskModel.Deadline;
+                taskEntity.StatusId = taskModel.StatusId;
+   
+                Comment addComment = await UpdateCommentAsync(taskModel, id);
+
+
+                _context.Tasks.Update(taskEntity);
+                await _context.SaveChangesAsync();
+                return RedirectToAction("Dashboard", new { success = true });
             }
-
-            try
+            else
             {
-                var taskEntity = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id);
+                if (id == null)
+                {
+                    return NotFound();
+                }
+                var taskEntity = await _context.Tasks
+                    .Include(st => st.Status)
+                    .Include(cm => cm.Comments)
+                     .Include(at=> at.Attachments)
+                    .FirstOrDefaultAsync(t => t.Id == id);
                 taskModel = new TaskModel
                 {
-                    Id = taskEntity.Id,
-                    Title = taskEntity.Title,
-                    Deadline = taskEntity.Deadline,
-                    StatusId = taskEntity.StatusId,
-
+                        Id = taskEntity.Id,
+                        Title = taskEntity.Title,
+                        Deadline = taskEntity.Deadline,
+                        StatusId = taskEntity.StatusId,
+                        Comment = taskEntity.Comments?.OrderByDescending(c => c.PostedAt)?.FirstOrDefault()?.Text,
                 };
-                 var statusOptions = _context.Statuses.ToList();
+
+                var statusOptions = _context.Statuses.ToList();
                 ViewData["StatusOptions"] = new SelectList(statusOptions, "Id", "Name", taskEntity.StatusId);
-
-                //var taskModEnt = _context.Update(taskEntity);
-                //var Testuser1 = await _context.SaveChangesAsync();
-                //return RedirectToAction("Dashboard", new { success = true });
-
+                return View(taskModel);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
-                return View("Error");
-            }
-            if (taskModel == null)
-            {
-                return NotFound();
-            }
-
-            return View(taskModel);
         }
+
+        private bool TaskExists(int id)
+        {
+            return _context.Tasks.Any(e => e.Id == id);
+        }
+
+
+        //public async Task<IActionResult> Edit(int? id)
+        //{
+        //    TaskModel taskModel;
+
+        //    if (id == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    try
+        //    {
+        //        var taskEntity = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id);
+        //        taskModel = new TaskModel
+        //        {
+        //            Id = taskEntity.Id,
+        //            Title = taskEntity.Title,
+        //            Deadline = taskEntity.Deadline,
+        //            StatusId = taskEntity.StatusId,
+
+        //        };
+        //         var statusOptions = _context.Statuses.ToList();
+        //        ViewData["StatusOptions"] = new SelectList(statusOptions, "Id", "Name", taskEntity.StatusId);
+
+        //        //var taskModEnt = _context.Update(taskEntity);
+        //        //var Testuser1 = await _context.SaveChangesAsync();
+        //        //return RedirectToAction("Dashboard", new { success = true });
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
+        //        return View("Error");
+        //    }
+        //    if (taskModel == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    return View(taskModel);
+        //}
 
         [HttpPost]
         public async Task<ActionResult> Delete(int id)
