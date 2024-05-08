@@ -51,6 +51,7 @@ namespace TaskManagementSystem.Controllers
 
 
                 ViewData["isAuth"] = true;
+                ViewData["departmentId"] = user.DepartmentId;
                 //return View();
                 return RedirectToAction("Dashboard", "TaskManagement", new { departmentId = user.DepartmentId });
             }

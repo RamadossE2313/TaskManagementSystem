@@ -38,6 +38,7 @@ namespace TaskManagementSystem.Controllers
                                      .Include(t => t.Comments)
                                      .Include(t => t.TeamMembers)
                                      .Include(t => t.Attachments)
+                                     //.Where(t => t.TeamMembers.Any(tm => tm.DepartmentId == departmentId))
                                      .ToList();
 
                 foreach (var task in tasks)
@@ -81,7 +82,9 @@ namespace TaskManagementSystem.Controllers
                 var tasks = _context.Tasks.Include(t => t.Status)
                                           .Include(t => t.Comments)
                                           .Include(t => t.Attachments)
-                                          .Include(t => t.TeamMembers).ToList();
+                                          .Include(t => t.TeamMembers)
+                                          //.Where(t => t.TeamMembers.Any(tm => tm.DepartmentId == departmentId))
+                                          .ToList();
 
                 foreach (var task in tasks)
                 {
