@@ -23,15 +23,15 @@
             <th>
                 <div class="filter-container">
                     <input type="text" class="form-control filter-input" placeholder="Filter Status" id="filterStatus">
-                    <button class="sort-button" title="Sort Title Ascending"  id="sortStatusAsc">&#x25B2;</button>
-                    <button class="sort-button" title="Sort Title Descending"  id="sortStatusDesc">&#x25BC;</button>
+                    <button class="sort-button" title="Sort Status Ascending"  id="sortStatusAsc">&#x25B2;</button>
+                    <button class="sort-button" title="Sort Status Descending"  id="sortStatusDesc">&#x25BC;</button>
                 </div>
             </th>
             <th>
                 <div class="filter-container">
                     <input type="text" class="form-control filter-input" placeholder="Filter Deadline" id="filterDeadline">
-                    <button class="sort-button" title="Sort Title Ascending" id="sortDeadlineAsc">&#x25B2;</button>
-                    <button class="sort-button" title="Sort Title Descending"  id="sortDeadlineDesc">&#x25BC;</button>
+                    <button class="sort-button" title="Sort Deadline Ascending" id="sortDeadlineAsc">&#x25B2;</button>
+                    <button class="sort-button" title="Sort Deadline Descending" id="sortDeadlineDesc">&#x25BC;</button>
                 </div>
             </th>
             <th>
@@ -39,6 +39,9 @@
             </th>
             <th>
                 <input type="text" class="form-control filter-input" placeholder="Filter Comments" id="filterComments">
+            </th>
+            <th>
+                <input type="text" class="form-control filter-input" placeholder="Filter File" id="filterAttachments">
             </th>
             <th>Actions</th>
         </tr>
@@ -52,6 +55,14 @@
                 <td>@item.Deadline.ToShortDateString()</td>
                 <td>@item.AssignedUsers</td>
                 <td>@item.Comment</td>
+               <td>
+                    @if (!string.IsNullOrEmpty(item.Attachment))
+                    {
+                        <a href="@Url.Content("~/uploads/" + item.Attachment)" download>
+                            <img src="path_to_image_icon" alt="Attachment">
+                        </a>
+                    }
+                </td>
                 <td class="action-buttons">
                     @using (Html.BeginForm("Edit", "TaskManagement", new { id = item.Id }, FormMethod.Post))
                     {

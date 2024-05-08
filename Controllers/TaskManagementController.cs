@@ -35,7 +35,9 @@ namespace TaskManagementSystem.Controllers
 
                 var tasks = _context.Tasks.Include(t => t.Status)
                                      .Include(t => t.Comments)
-                                     .Include(t => t.TeamMembers).ToList();
+                                     .Include(t => t.TeamMembers)
+                                     .Include(t => t.Attachments)
+                                     .ToList();
 
                 foreach (var task in tasks)
                 {
@@ -47,6 +49,7 @@ namespace TaskManagementSystem.Controllers
                         Status = task.Status.Name.ToString(),
                         AssignedUsers = string.Join(',', task.TeamMembers.Select(teamMember => teamMember.UserName).ToList()),
                         Comment = task.Comments?.FirstOrDefault()?.Text,
+                        Attachment = task.Attachments?.FirstOrDefault()?.FileName,
                     };
 
                     dashboardList.Add(dashboardModel);
@@ -76,6 +79,7 @@ namespace TaskManagementSystem.Controllers
 
                 var tasks = _context.Tasks.Include(t => t.Status)
                                           .Include(t => t.Comments)
+                                          .Include(t => t.Attachments)
                                           .Include(t => t.TeamMembers).ToList();
 
                 foreach (var task in tasks)
@@ -88,6 +92,7 @@ namespace TaskManagementSystem.Controllers
                         Status = task.Status.Name.ToString(),
                         AssignedUsers = string.Join(',', task.TeamMembers.Select(teamMember => teamMember.UserName).ToList()),
                         Comment = task.Comments?.FirstOrDefault()?.Text,
+                        Attachment = task.Attachments?.FirstOrDefault()?.FileName,
                     };
 
                     dashboardList.Add(dashboardModel);
