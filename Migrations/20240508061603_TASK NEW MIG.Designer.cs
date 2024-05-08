@@ -12,8 +12,8 @@ using TaskManagementSystem.Data;
 namespace TaskManagementSystem.Migrations
 {
     [DbContext(typeof(TaskManagementDBContext))]
-    [Migration("20240507184724_Model relationships are modified")]
-    partial class Modelrelationshipsaremodified
+    [Migration("20240508061603_TASK NEW MIG")]
+    partial class TASKNEWMIG
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
