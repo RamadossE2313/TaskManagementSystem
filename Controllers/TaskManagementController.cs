@@ -6,7 +6,6 @@ using TaskManagementSystem.Data;
 using TaskManagementSystem.Entity;
 using TaskManagementSystem.Models;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace TaskManagementSystem.Controllers
 {
@@ -14,7 +13,8 @@ namespace TaskManagementSystem.Controllers
     {
         private readonly TaskManagementDBContext _context;
         private readonly ILogger<TaskManagementController> _logger;
-        public TaskManagementController(TaskManagementDBContext taskManagementDBContext, ILogger<TaskManagementController> logger)
+        public TaskManagementController(TaskManagementDBContext taskManagementDBContext, 
+            ILogger<TaskManagementController> logger)
         {
             _context = taskManagementDBContext;
             _logger = logger;
@@ -24,12 +24,13 @@ namespace TaskManagementSystem.Controllers
         /// To display all the task details
         /// </summary>
         /// <returns></returns>
-        public IActionResult Dashboard(int departmentId)
+        public IActionResult Dashboard()
         {
+            int departmentId = GetDepartmentId();
             List<DashboardModel> dashboardList = new List<DashboardModel>();
             try
             {
-                if (!isAuth())
+                if (!IsAuth())
                 {
                     return Redirect("~/");
                 }
@@ -38,7 +39,7 @@ namespace TaskManagementSystem.Controllers
                                      .Include(t => t.Comments)
                                      .Include(t => t.TeamMembers)
                                      .Include(t => t.Attachments)
-                                     //.Where(t => t.TeamMembers.Any(tm => tm.DepartmentId == departmentId))
+                                     .Where(t => t.TeamMembers.Any(tm => tm.DepartmentId == departmentId))
                                      .ToList();
 
                 foreach (var task in tasks)
@@ -65,14 +66,13 @@ namespace TaskManagementSystem.Controllers
             return View(dashboardList);
         }
 
-       
-
-        public IActionResult Kanban(int departmentId)
+        public IActionResult Kanban()
         {
+            int departmentId = GetDepartmentId();
             List<DashboardModel> dashboardList = new List<DashboardModel>();
             try
             {
-                if (!isAuth())
+                if (!IsAuth())
                 {
                     return Redirect("~/");
                 }
@@ -83,7 +83,7 @@ namespace TaskManagementSystem.Controllers
                                           .Include(t => t.Comments)
                                           .Include(t => t.Attachments)
                                           .Include(t => t.TeamMembers)
-                                          //.Where(t => t.TeamMembers.Any(tm => tm.DepartmentId == departmentId))
+                                          .Where(t => t.TeamMembers.Any(tm => tm.DepartmentId == departmentId))
                                           .ToList();
 
                 foreach (var task in tasks)
@@ -115,15 +115,16 @@ namespace TaskManagementSystem.Controllers
         {
             try
             {
-                var users = _context.Users;
+                int departmentId = GetDepartmentId();
+                var users = _context.Users.Where(user => user.DepartmentId == departmentId);
                 ViewData["Users"] = new SelectList(users, "Id", "UserName");
 
                 var statusOptions = new List<SelectListItem>
-            {
-                new SelectListItem { Value = "1", Text = "New" },
-                new SelectListItem { Value = "2", Text = "Pending" },
-                new SelectListItem { Value = "3", Text = "Done" }
-            };
+                {
+                    new SelectListItem { Value = "1", Text = "New" },
+                    new SelectListItem { Value = "2", Text = "Pending" },
+                    new SelectListItem { Value = "3", Text = "Done" }
+                };
                 ViewData["StatusOptions"] = statusOptions;
             }
             catch (Exception ex)
@@ -131,7 +132,7 @@ namespace TaskManagementSystem.Controllers
                 _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
                 return View("Error");
             }
-
+             
             return View();
         }
 
@@ -183,15 +184,9 @@ namespace TaskManagementSystem.Controllers
 
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, TaskModel taskModel)
         {
-
-            //var users = _context.Users;
-            //ViewData["Users"] = new SelectList(users, "Id", "UserName");
-
             var users = await _context.Users.ToListAsync();
-            //ViewData["Users"] = new SelectList(users, "Id", "UserName", taskModel.AssignedUserIds);
 
             if (taskModel.Title != null)
             {
@@ -219,12 +214,14 @@ namespace TaskManagementSystem.Controllers
                 {
                     return NotFound();
                 }
+
                 var taskEntity = await _context.Tasks
                     .Include(st => st.Status)
                     .Include(cm => cm.Comments)
                     .Include(at => at.Attachments)
                     .Include(t=>t.TeamMembers)
                     .FirstOrDefaultAsync(t => t.Id == id);
+
                 taskModel = new TaskModel
                 {
                     Id = taskEntity.Id,
@@ -235,23 +232,28 @@ namespace TaskManagementSystem.Controllers
                     
                 };
 
-                var selectedUserIds = taskEntity.TeamMembers.Select(u => u.Id).ToList();
-                var userSelectList = users.Select(u => new SelectListItem
-                {
-                    Value = u.Id.ToString(),
-                    Text = u.UserName,
-                    Selected = selectedUserIds.Contains(u.Id),
-                    Group = new SelectListGroup { Name = selectedUserIds.Contains(u.Id) ? "Assigned" : "Not Assigned" } // Assign users to groups based on their assignment status
-                }).ToList();
-                ViewData["Users"] = new SelectList(userSelectList, "Value", "Text", selectedUserIds); // Pass selected IDs to preselect users
+                int departmentId = GetDepartmentId();
+                var userList = _context.Users.Where(user => user.DepartmentId == departmentId).ToList();
+                List<int> selectedUserIds = taskEntity.TeamMembers.Select(t => t.Id).ToList();
 
+                List<SelectListItem> userSelectList = new List<SelectListItem>();
+                foreach (var user in userList)
+                {
+                    userSelectList.Add(new SelectListItem
+                    {
+                        Text = user.UserName,
+                        Value = user.Id.ToString(),
+                        Selected = selectedUserIds.Contains(user.Id)
+                    });
+                }
+
+                ViewData["Users"] = userSelectList;
 
                 var statusOptions = _context.Statuses.ToList();
                 ViewData["StatusOptions"] = new SelectList(statusOptions, "Id", "Name", taskEntity.StatusId);
                 return View(taskModel);
             }
         }
-
 
         private async Task<Comment> AddCommentAsync(TaskModel taskModel, int taskId)
         {
@@ -368,88 +370,6 @@ namespace TaskManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Details(int? id)
-        {
-            TaskManagementSystem.Models.TaskModel taskModel;
-
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            try
-            {
-                var taskEntity = await _context.Tasks.Include(st => st.Status)
-                          .Include(cm => cm.Comments).FirstOrDefaultAsync(m => m.Id == id);
-                taskModel = new TaskManagementSystem.Models.TaskModel
-                {
-                    Id = taskEntity.Id,
-                    Title = taskEntity.Title,
-                    Deadline = taskEntity.Deadline,
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
-                return View("Error");
-            }
-            if (taskModel == null)
-            {
-                return NotFound();
-            }
-
-            return View(taskModel);
-        }
-
-       
-        private bool TaskExists(int id)
-        {
-            return _context.Tasks.Any(e => e.Id == id);
-        }
-
-
-        //public async Task<IActionResult> Edit(int? id)
-        //{
-        //    TaskModel taskModel;
-
-        //    if (id == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    try
-        //    {
-        //        var taskEntity = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id);
-        //        taskModel = new TaskModel
-        //        {
-        //            Id = taskEntity.Id,
-        //            Title = taskEntity.Title,
-        //            Deadline = taskEntity.Deadline,
-        //            StatusId = taskEntity.StatusId,
-
-        //        };
-        //         var statusOptions = _context.Statuses.ToList();
-        //        ViewData["StatusOptions"] = new SelectList(statusOptions, "Id", "Name", taskEntity.StatusId);
-
-        //        //var taskModEnt = _context.Update(taskEntity);
-        //        //var Testuser1 = await _context.SaveChangesAsync();
-        //        //return RedirectToAction("Dashboard", new { success = true });
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "An error occurred while retrieving dashboard data.");
-        //        return View("Error");
-        //    }
-        //    if (taskModel == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return View(taskModel);
-        //}
-
-        [HttpPost]
         public async Task<ActionResult> Delete(int id)
         {
             try
@@ -471,7 +391,7 @@ namespace TaskManagementSystem.Controllers
             }
         }
 
-        public bool isAuth()
+        private bool IsAuth()
         {
             bool isAuthenticated = false;
             try
@@ -508,5 +428,10 @@ namespace TaskManagementSystem.Controllers
             return isAuthenticated;
         }
 
+        private int GetDepartmentId()
+        {
+            return HttpContext.Session.GetInt32("departmentId") ?? 
+                throw new NullReferenceException("DepartmentId can't be null");
+        }
     }
 }

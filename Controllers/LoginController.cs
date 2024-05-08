@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System.Runtime.Serialization.Formatters.Binary;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -33,7 +31,7 @@ namespace TaskManagementSystem.Controllers
                 {
                     new Claim(ClaimTypes.Name, user.UserName),
                     new Claim(ClaimTypes.Role, "User"), // Assuming some role
-                    new Claim(ClaimTypes.Authentication, "true") // Claim indicating authentication status
+                    new Claim(ClaimTypes.Authentication, "true"), // Claim indicating authentication status
                 };
                 var identity = new ClaimsIdentity(claims, "Custom");
 
@@ -51,9 +49,8 @@ namespace TaskManagementSystem.Controllers
 
 
                 ViewData["isAuth"] = true;
-                ViewData["departmentId"] = user.DepartmentId;
-                //return View();
-                return RedirectToAction("Dashboard", "TaskManagement", new { departmentId = user.DepartmentId });
+                HttpContext.Session.SetInt32("departmentId", user.DepartmentId);
+                return RedirectToAction("Dashboard", "TaskManagement");
             }
             else
             {
