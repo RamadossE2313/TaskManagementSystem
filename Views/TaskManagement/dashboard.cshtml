@@ -13,11 +13,21 @@
 <table id="taskTable" class="table">
     <thead>
         <tr>
-            <th>Title</th>
-            <th>Status</th>
-            <th>Deadline</th>
-            <th>Assigned Users</th>
-            <th>Comments</th>
+            <th>
+                <input type="text" class="form-control" placeholder="Filter Title" id="filterTitle">
+            </th>
+            <th>
+                <input type="text" class="form-control" placeholder="Filter Status" id="filterStatus">
+            </th>
+            <th>
+                <input type="text" class="form-control" placeholder="Filter Deadline" id="filterDeadline">
+            </th>
+            <th>
+                <input type="text" class="form-control" placeholder="Filter Assigned Users" id="filterAssignedUsers">
+            </th>
+            <th>
+                <input type="text" class="form-control" placeholder="Filter Comments" id="filterComments">
+            </th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -68,6 +78,16 @@
                 var value = $(this).val().toLowerCase();
                 $('#taskTable tbody tr').filter(function () {
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+
+            // Filter table rows based on input in each column
+            $('#filterTitle, #filterStatus, #filterDeadline, #filterAssignedUsers, #filterComments').on('keyup', function () {
+                var columnIndex = $(this).closest('th').index();
+                var value = $(this).val().toLowerCase();
+                $('#taskTable tbody tr').each(function () {
+                    var cellText = $(this).find('td:eq(' + columnIndex + ')').text().toLowerCase();
+                    $(this).toggle(cellText.indexOf(value) > -1);
                 });
             });
         });
