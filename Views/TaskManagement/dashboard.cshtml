@@ -14,19 +14,31 @@
     <thead>
         <tr>
             <th>
-                <input type="text" class="form-control" placeholder="Filter Title" id="filterTitle">
+                <div class="filter-container">
+                    <input type="text" class="form-control filter-input" placeholder="Filter Title" id="filterTitle">
+                    <button class="sort-button" title="Sort Title Ascending"  id="sortTitleAsc">&#x25B2;</button>
+                    <button class="sort-button" title="Sort Title Descending"  id="sortTitleDesc">&#x25BC;</button>
+                </div>
             </th>
             <th>
-                <input type="text" class="form-control" placeholder="Filter Status" id="filterStatus">
+                <div class="filter-container">
+                    <input type="text" class="form-control filter-input" placeholder="Filter Status" id="filterStatus">
+                    <button class="sort-button" title="Sort Title Ascending"  id="sortStatusAsc">&#x25B2;</button>
+                    <button class="sort-button" title="Sort Title Descending"  id="sortStatusDesc">&#x25BC;</button>
+                </div>
             </th>
             <th>
-                <input type="text" class="form-control" placeholder="Filter Deadline" id="filterDeadline">
+                <div class="filter-container">
+                    <input type="text" class="form-control filter-input" placeholder="Filter Deadline" id="filterDeadline">
+                    <button class="sort-button" title="Sort Title Ascending" id="sortDeadlineAsc">&#x25B2;</button>
+                    <button class="sort-button" title="Sort Title Descending"  id="sortDeadlineDesc">&#x25BC;</button>
+                </div>
             </th>
             <th>
-                <input type="text" class="form-control" placeholder="Filter Assigned Users" id="filterAssignedUsers">
+                <input type="text" class="form-control filter-input" placeholder="Filter Assigned Users" id="filterAssignedUsers">
             </th>
             <th>
-                <input type="text" class="form-control" placeholder="Filter Comments" id="filterComments">
+                <input type="text" class="form-control filter-input" placeholder="Filter Comments" id="filterComments">
             </th>
             <th>Actions</th>
         </tr>
@@ -82,13 +94,79 @@
             });
 
             // Filter table rows based on input in each column
-            $('#filterTitle, #filterStatus, #filterDeadline, #filterAssignedUsers, #filterComments').on('keyup', function () {
+            $('.filter-input').on('keyup', function () {
                 var columnIndex = $(this).closest('th').index();
                 var value = $(this).val().toLowerCase();
                 $('#taskTable tbody tr').each(function () {
                     var cellText = $(this).find('td:eq(' + columnIndex + ')').text().toLowerCase();
                     $(this).toggle(cellText.indexOf(value) > -1);
                 });
+            });
+
+            // Sort table by Title ASC
+            $('#sortTitleAsc').on('click', function () {
+                var rows = $('#taskTable tbody tr').toArray();
+                rows.sort(function (a, b) {
+                    var aValue = $(a).find('td:eq(0)').text().toLowerCase();
+                    var bValue = $(b).find('td:eq(0)').text().toLowerCase();
+                    return aValue.localeCompare(bValue);
+                });
+                $('#taskTable tbody').empty().append(rows);
+            });
+
+            // Sort table by Title DESC
+            $('#sortTitleDesc').on('click', function () {
+                var rows = $('#taskTable tbody tr').toArray();
+                rows.sort(function (a, b) {
+                    var aValue = $(a).find('td:eq(0)').text().toLowerCase();
+                    var bValue = $(b).find('td:eq(0)').text().toLowerCase();
+                    return bValue.localeCompare(aValue);
+                });
+                $('#taskTable tbody').empty().append(rows);
+            });
+
+            // Sort table by Status ASC
+            $('#sortStatusAsc').on('click', function () {
+                var rows = $('#taskTable tbody tr').toArray();
+                rows.sort(function (a, b) {
+                    var aValue = $(a).find('td:eq(1)').text().toLowerCase();
+                    var bValue = $(b).find('td:eq(1)').text().toLowerCase();
+                    return aValue.localeCompare(bValue);
+                });
+                $('#taskTable tbody').empty().append(rows);
+            });
+
+            // Sort table by Status DESC
+            $('#sortStatusDesc').on('click', function () {
+                var rows = $('#taskTable tbody tr').toArray();
+                rows.sort(function (a, b) {
+                    var aValue = $(a).find('td:eq(1)').text().toLowerCase();
+                    var bValue = $(b).find('td:eq(1)').text().toLowerCase();
+                    return bValue.localeCompare(aValue);
+                });
+                $('#taskTable tbody').empty().append(rows);
+            });
+
+            // Sort table by Deadline ASC
+            $('#sortDeadlineAsc').on('click', function () {
+                var rows = $('#taskTable tbody tr').toArray();
+                rows.sort(function (a, b) {
+                    var aValue = new Date($(a).find('td:eq(2)').text()).getTime();
+                    var bValue = new Date($(b).find('td:eq(2)').text()).getTime();
+                    return aValue - bValue;
+                });
+                $('#taskTable tbody').empty().append(rows);
+            });
+
+            // Sort table by Deadline DESC
+            $('#sortDeadlineDesc').on('click', function () {
+                var rows = $('#taskTable tbody tr').toArray();
+                rows.sort(function (a, b) {
+                    var aValue = new Date($(a).find('td:eq(2)').text()).getTime();
+                    var bValue = new Date($(b).find('td:eq(2)').text()).getTime();
+                    return bValue - aValue;
+                });
+                $('#taskTable tbody').empty().append(rows);
             });
         });
     </script>
@@ -99,6 +177,21 @@
     .action-buttons {
         display: flex;
         gap: 5px; /* Adjust spacing between buttons as needed */
+    }
+
+    .filter-container {
+        position: relative;
+    }
+
+    .sort-button {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: 20px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
     }
 
     .popup {
