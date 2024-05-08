@@ -9,5 +9,6 @@
         public string AssignedUsers { get; set; }
         public string Comment { get; set; }
         public string Attachment { get; set; }
+        public string Department { get; set; }
     }
 }

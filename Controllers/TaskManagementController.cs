@@ -6,6 +6,7 @@ using TaskManagementSystem.Data;
 using TaskManagementSystem.Entity;
 using TaskManagementSystem.Models;
 using System.Text.Json;
+using System.Diagnostics.Metrics;
 
 namespace TaskManagementSystem.Controllers
 {
@@ -24,10 +25,19 @@ namespace TaskManagementSystem.Controllers
         /// To display all the task details
         /// </summary>
         /// <returns></returns>
+        public IActionResult Logout(string returnUrl = "~/")
+        {
+            // Perform logout logic here, such as clearing authentication cookies, etc.
+
+            // Redirect the user to the specified returnUrl (defaulting to "~/")
+            return Redirect(returnUrl);
+        }
         public IActionResult Dashboard()
         {
             int departmentId = GetDepartmentId();
             List<DashboardModel> dashboardList = new List<DashboardModel>();
+            var tasks = new List<Entity.Task>();
+            string departmentName="";
             try
             {
                 if (!IsAuth())
@@ -35,15 +45,31 @@ namespace TaskManagementSystem.Controllers
                     return Redirect("~/");
                 }
 
-                var tasks = _context.Tasks.Include(t => t.Status)
+                if(departmentId==4)
+                {
+                    tasks = _context.Tasks.Include(t => t.Status)
                                      .Include(t => t.Comments)
-                                     .Include(t => t.TeamMembers)
+                                     .Include(t => t.TeamMembers).ThenInclude(tm => tm.Department)
+                                     .Include(t => t.Attachments)
+                                     .ToList();
+                }
+                 else
+                {
+                    tasks = _context.Tasks.Include(t => t.Status)
+                                     .Include(t => t.Comments)
+                                     .Include(t => t.TeamMembers).ThenInclude(tm => tm.Department)
                                      .Include(t => t.Attachments)
                                      .Where(t => t.TeamMembers.Any(tm => tm.DepartmentId == departmentId))
                                      .ToList();
+                }
 
                 foreach (var task in tasks)
                 {
+                    foreach (var teamMember in task.TeamMembers)
+                    {
+                        departmentName = teamMember.Department.Name;
+                    }
+
                     DashboardModel dashboardModel = new DashboardModel
                     {
                         Id = task.Id,
@@ -53,6 +79,8 @@ namespace TaskManagementSystem.Controllers
                         AssignedUsers = string.Join(',', task.TeamMembers.Select(teamMember => teamMember.UserName).ToList()),
                         Comment = task.Comments?.OrderByDescending(c => c.PostedAt)?.FirstOrDefault()?.Text,
                         Attachment = task.Attachments?.FirstOrDefault()?.FileName,
+                        Department= departmentName,
+
                     };
 
                     dashboardList.Add(dashboardModel);
@@ -70,6 +98,7 @@ namespace TaskManagementSystem.Controllers
         {
             int departmentId = GetDepartmentId();
             List<DashboardModel> dashboardList = new List<DashboardModel>();
+            var tasks = new List<Entity.Task>();
             try
             {
                 if (!IsAuth())
@@ -79,12 +108,23 @@ namespace TaskManagementSystem.Controllers
 
 
 
-                var tasks = _context.Tasks.Include(t => t.Status)
-                                          .Include(t => t.Comments)
-                                          .Include(t => t.Attachments)
-                                          .Include(t => t.TeamMembers)
-                                          .Where(t => t.TeamMembers.Any(tm => tm.DepartmentId == departmentId))
-                                          .ToList();
+                if (departmentId == 4)
+                {
+                    tasks = _context.Tasks.Include(t => t.Status)
+                                     .Include(t => t.Comments)
+                                     .Include(t => t.TeamMembers)
+                                     .Include(t => t.Attachments)
+                                     .ToList();
+                }
+                else
+                {
+                    tasks = _context.Tasks.Include(t => t.Status)
+                                     .Include(t => t.Comments)
+                                     .Include(t => t.TeamMembers)
+                                     .Include(t => t.Attachments)
+                                     .Where(t => t.TeamMembers.Any(tm => tm.DepartmentId == departmentId))
+                                     .ToList();
+                }
 
                 foreach (var task in tasks)
                 {

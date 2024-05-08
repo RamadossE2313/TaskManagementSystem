@@ -38,6 +38,9 @@
                 <input type="text" class="form-control filter-input" placeholder="Filter Assigned Users" id="filterAssignedUsers">
             </th>
             <th>
+                <input type="text" class="form-control filter-input" placeholder="Filter Dept." id="filterDepartment">
+            </th>
+            <th>
                 <input type="text" class="form-control filter-input" placeholder="Filter Comments" id="filterComments">
             </th>
             <th>
@@ -54,6 +57,7 @@
                 <td style="color: @(item.Status == "Done" ? "green" : item.Status == "Pending" ? "orange" : "")">@item.Status</td>
                 <td>@item.Deadline.ToShortDateString()</td>
                 <td>@item.AssignedUsers</td>
+                <td>@item.Department</td>
                 <td>@item.Comment</td>
                <td>
                     @if (!string.IsNullOrEmpty(item.Attachment))
